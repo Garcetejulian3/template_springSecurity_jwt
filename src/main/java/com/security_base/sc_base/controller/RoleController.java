@@ -25,34 +25,34 @@ public class RoleController {
     private IPermissionService permissionService;
 
     @GetMapping
-    public ResponseEntity<List> getAllRoles() {
-        List roles = roleService.findAll();
-        return ResponseEntity.ok(roles);
+    public ResponseEntity<List<Role>> getAllRoles() {
+        return ResponseEntity.ok(roleService.findAll());
     }
+
 
     @GetMapping("/{id}")
-    public ResponseEntity getRoleById(@PathVariable Long id) {
-        Optional role = roleService.findById(id);
-        return (ResponseEntity) role.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<Role> getRoleById(@PathVariable Long id) {
+
+        return roleService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    public ResponseEntity createRole(@RequestBody Role role) {
-        Set<Permission> permissionList = new HashSet<>();
-        Permission readPermission;
 
-        // Recuperar la Permission/s por su ID
-        for (Permission per : role.getPermissionsList()) {
-            readPermission = (Permission) permissionService.findById(per.getId()).orElse(null);
-            if (readPermission != null) {
-                //si encuentro, guardo en la lista
-                permissionList.add(readPermission);
+    @PostMapping
+    public ResponseEntity<Role> createRole(@RequestBody Role role) {
+
+        Set<Permission> permissions = new HashSet<>();
+
+        if (role.getPermissionsList() != null) {
+            for (Permission per : role.getPermissionsList()) {
+                permissionService.findById(per.getId())
+                        .ifPresent(permissions::add);
             }
         }
 
-        role.setPermissionsList(permissionList);
-        Role newRole = roleService.save(role);
-        return ResponseEntity.ok(newRole);
+        role.setPermissionsList(permissions);
+        return ResponseEntity.ok(roleService.save(role));
     }
 
 }

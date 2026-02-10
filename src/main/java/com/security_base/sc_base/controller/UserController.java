@@ -26,39 +26,36 @@ public class UserController {
     private IRoleService roleService;
 
     @GetMapping
-    public ResponseEntity<List> getAllUsers() {
-        List users = userService.findAll();
-        return ResponseEntity.ok(users);
+    public ResponseEntity<List<UserSec>> getAllUsers() {
+        return ResponseEntity.ok(userService.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity getUserById(@PathVariable Long id) {
-        Optional user = userService.findById(id);
-        return (ResponseEntity) user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<UserSec> getUserById(@PathVariable Long id) {
+
+        return userService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity createUser(@RequestBody UserSec userSec) {
+    public ResponseEntity<UserSec> createUser(@RequestBody UserSec userSec) {
 
-        Set<Role> roleList = new HashSet<>();
-        Role readRole;
+        Set<Role> roles = new HashSet<>();
+        userSec.setPassword(userService.encriptPassword(userSec.getPassword()));
 
-        // Recuperar la Permission/s por su ID
-        for (Role role : userSec.getRolesList()){
-            readRole = (Role) roleService.findById(role.getId()).orElse(null);
-            if (readRole != null) {
-                //si encuentro, guardo en la lista
-                roleList.add(readRole);
+        if (userSec.getRolesList() != null) {
+            for (Role role : userSec.getRolesList()) {
+                roleService.findById(role.getId())
+                        .ifPresent(roles::add);
             }
         }
 
-        if (!roleList.isEmpty()) {
-            userSec.setRolesList(roleList);
-
-            UserSec newUser = userService.save(userSec);
-            return ResponseEntity.ok(newUser);
+        if (roles.isEmpty()) {
+            return ResponseEntity.badRequest().build();
         }
-        return null;
-    }
 
+        userSec.setRolesList(roles);
+        return ResponseEntity.ok(userService.save(userSec));
+    }
 }

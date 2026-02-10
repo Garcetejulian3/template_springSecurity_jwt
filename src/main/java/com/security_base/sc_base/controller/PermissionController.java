@@ -14,26 +14,25 @@ import java.util.Optional;
 @RequestMapping("/api/permissions")
 @PreAuthorize("permitAll()")
 public class PermissionController {
+
     @Autowired
     private IPermissionService permissionService;
 
     @GetMapping
-    public ResponseEntity<List> getAllPermissions() {
-        List permissions = permissionService.findAll();
-        return ResponseEntity.ok(permissions);
+    public ResponseEntity<List<Permission>> getAllPermissions() {
+        return ResponseEntity.ok(permissionService.findAll());
     }
 
     @GetMapping("/{id}")
-    public Object getPermissionById(@PathVariable Long id) {
-        Optional permission = permissionService.findById(id);
-        return permission.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<Permission> getPermissionById(@PathVariable Long id) {
+
+        return permissionService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity createPermission(@RequestBody Permission permission) {
-        Permission newPermission = permissionService.save(permission);
-        return ResponseEntity.ok(newPermission);
+    public ResponseEntity<Permission> createPermission(@RequestBody Permission permission) {
+        return ResponseEntity.ok(permissionService.save(permission));
     }
-
-
 }

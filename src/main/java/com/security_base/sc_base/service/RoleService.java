@@ -27,7 +27,6 @@ public class RoleService implements IRoleService {
 
 
     @Override
-    @Transactional
     public Role save(Role role) {
         return roleRepository.save(role);
     }
